@@ -134,7 +134,7 @@ class Sala {
     const jug = {
       id, ws, nombre, token, x, y, rot: Math.PI, // θ continuo (π = mirando al sur)
       distSala: 0,
-      salud: 100, sed: 100, cordura: 100, luz: false, escondido: null, muerto: false,
+      salud: 100, sed: 100, cordura: 100, hambre: 100, luz: false, escondido: null, muerto: false,
       inv: [], manos: [null, null], equipo: { cara: null, cuerpo: null, pies: null },
       esAdmin: false, muteadoHasta: 0,
       ultMov: 0, ultChat: 0, canal: null, ofertaEn: null,
@@ -214,6 +214,17 @@ class Sala {
       const n = Math.floor(jug._sedAcum / cadSed);
       jug._sedAcum -= n * cadSed;
       jug.sed = Math.max(0, jug.sed - n);
+    }
+    // hambre: SOLO observabilidad. Drena por tiles a la misma proporción que
+    // el offline (1/15 turnos, más lento que la sed 1/9) para que el guardián
+    // vea el estado nutricional en el panel. A 0 NO hace daño y NO se envía al
+    // cliente: es una métrica del observatorio, no una mecánica de juego.
+    jug._hambreAcum = (jug._hambreAcum || 0) + tiles;
+    const cadHambre = 15;
+    if (jug._hambreAcum >= cadHambre) {
+      const n = Math.floor(jug._hambreAcum / cadHambre);
+      jug._hambreAcum -= n * cadHambre;
+      jug.hambre = Math.max(0, (jug.hambre ?? 100) - n);
     }
     if (reglas.some((r) => ['zumbido', 'alucinaciones', 'aislamiento', 'vigilado'].includes(r))) {
       jug._corduraAcum = (jug._corduraAcum || 0) + tiles;
@@ -467,6 +478,8 @@ class Sala {
     }
     if (ef.sed) jug.sed = Math.max(0, Math.min(100, jug.sed + ef.sed));
     if (ef.cordura) jug.cordura = Math.max(0, Math.min(100, jug.cordura + ef.cordura));
+    // la comida repone el hambre observada (métrica); no afecta salud ni muerte
+    if (ef.hambre) jug.hambre = Math.max(0, Math.min(100, (jug.hambre ?? 100) + ef.hambre));
     if (ef.ruido) this.hacerRuido(jug.x, jug.y, ef.ruido);
     this.enviarEstado(jug);
     if (!jug.muerto && (jug.salud <= 0 || jug.sed <= 0 || jug.cordura <= 0))
@@ -755,7 +768,8 @@ class Sala {
     this.difundir({ t: 'muere', id: jug.id, causa });
     setTimeout(() => {
       if (!this.jugadores.has(jug.id)) return;
-      jug.salud = 100; jug.sed = 100; jug.cordura = 100;
+      jug.salud = 100; jug.sed = 100; jug.cordura = 100; jug.hambre = 100;
+      jug._hambreAcum = 0;
       jug.muerto = false;
       jug.inv = []; jug.manos = [null, null];
       // lo VESTIDO también se queda atrás (paridad con startRun del modo solo;
@@ -1010,7 +1024,7 @@ function observa() {
       jugadores: [...s.jugadores.values()].map((j) => ({
         id: j.id, nombre: j.nombre, token6: String(j.token || '').slice(0, 6),
         x: r2(j.x), y: r2(j.y),
-        salud: j.salud, sed: j.sed, cordura: j.cordura,
+        salud: j.salud, sed: j.sed, cordura: j.cordura, hambre: j.hambre ?? 100,
         luz: !!j.luz, escondido: !!j.escondido, muerto: !!j.muerto,
         esAdmin: !!j.esAdmin, muteado: j.muteadoHasta > ahora,
         conectadoS: Math.round((ahora - (j.conectadoEn || ahora)) / 1000),

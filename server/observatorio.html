@@ -242,7 +242,7 @@
           : '<span class="num">0</span>';
         return `<tr>
           <td><b>${esc(j.nombre)}</b><span class="num">#${j.id} · ${esc(j.token6)}…</span></td>
-          <td class="vitals">${numColor(j.salud)}<span class="sep">/</span>${numColor(j.sed)}<span class="sep">/</span>${numColor(j.cordura)}</td>
+          <td class="vitals">${numColor(j.salud)}<span class="sep">/</span>${numColor(j.sed)}<span class="sep">/</span>${numColor(j.cordura)}<span class="sep">/</span>${numColor(j.hambre ?? 100)}</td>
           <td class="num">${j.x}, ${j.y}<br>${j.distSala} tiles</td>
           <td>${chips(j.manos, d.dicc, 'mano')}</td>
           <td class="col-inv">${chips(j.inv, d.dicc)}</td>
@@ -257,7 +257,7 @@
           · peligro ${s.peligro ?? '?'} · ${s.jugadores.length} errante${s.jugadores.length === 1 ? '' : 's'}
           · ${s.entidades.length} entidad${s.entidades.length === 1 ? '' : 'es'}
           · 💬 ${s.mensajes} · <span class="seed">${esc(s.semilla)}</span></span></h2>
-        <table class="compacta"><tr><th>errante</th><th title="salud / sed / cordura">❤ / 💧 / 🧠</th><th>posición</th>
+        <table class="compacta"><tr><th>errante</th><th title="salud / sed / cordura / hambre">❤ / 💧 / 🧠 / 🍞</th><th>posición</th>
           <th>manos</th><th class="col-inv">mochila</th><th>vistiendo</th>
           <th>tiempo</th><th title="informes de posición rechazados por el validador">⚠ rech.</th><th></th></tr>
           ${filas}</table>
